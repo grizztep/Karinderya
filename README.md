@@ -1,1 +1,1 @@
-# Karinderya
+npm install @heroicons/react
