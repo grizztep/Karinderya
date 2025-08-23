@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
-const Login = ({ onSwitchToSignup, onClose }) => {
+const Login = ({ onSwitchToSignup, onClose, onLoginSuccess, onSwitchToForgot }) => {
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -47,17 +47,71 @@ const Login = ({ onSwitchToSignup, onClose }) => {
         if (!validateForm()) return;
         
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        setErrors({}); // Clear any previous errors
+
+        try {
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken })
+                },
+                body: JSON.stringify({
+                    email: formData.email.trim(),
+                    password: formData.password
+                })
+            });
+
+            const data = await response.json();
+            console.log('Login response:', data);
+
+            if (response.ok) {
+                // Store user data in localStorage (optional)
+                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                // Call success callback if provided
+                if (onLoginSuccess) {
+                    onLoginSuccess(data.user, data.redirect);
+                }
+                
+                // Redirect based on role
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    // Fallback redirect logic
+                    if (data.user.role === 'admin') {
+                        window.location.href = '/admin-dashboard';
+                    } else {
+                        window.location.href = '/user-dashboard';
+                    }
+                }
+                
+                // Clear form and close modal
+                setFormData({ email: '', password: '' });
+                if (onClose) onClose();
+                
+            } else {
+                // Handle validation errors
+                if (response.status === 422 && data.errors) {
+                    setErrors(data.errors);
+                } else {
+                    alert(data.message || "Login failed. Please try again.");
+                }
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert("Network error occurred. Please check your connection and try again.");
+        } finally {
             setLoading(false);
-            console.log('Login submitted:', formData);
-            onClose();
-        }, 1500);
+        }
     };
 
     return (
         <div className="space-y-6">
-
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email Field */}
@@ -76,7 +130,16 @@ const Login = ({ onSwitchToSignup, onClose }) => {
                         }`}
                         placeholder="Enter your email"
                     />
-                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                    {errors.email && (
+                        <div className="mt-1">
+                            {Array.isArray(errors.email) 
+                                ? errors.email.map((error, idx) => (
+                                    <p key={idx} className="text-sm text-red-600">{error}</p>
+                                  ))
+                                : <p className="text-sm text-red-600">{errors.email}</p>
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Password Field */}
@@ -108,19 +171,39 @@ const Login = ({ onSwitchToSignup, onClose }) => {
                             )}
                         </button>
                     </div>
-                    {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                    {errors.password && (
+                        <div className="mt-1">
+                            {Array.isArray(errors.password) 
+                                ? errors.password.map((error, idx) => (
+                                    <p key={idx} className="text-sm text-red-600">{error}</p>
+                                  ))
+                                : <p className="text-sm text-red-600">{errors.password}</p>
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Remember Me & Forgot Password */}
                 <div className="flex items-center justify-between">
-                    <label className="flex items-center">
+                    <div className="flex items-center">
                         <input
+                            id="remember"
+                            name="remember"
                             type="checkbox"
                             className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                         />
-                        <span className="ml-2 block text-sm text-gray-700">Remember me</span>
-                    </label>
-                    <button type="button" className="text-sm text-green-600 hover:text-green-700 font-medium">
+                        <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                            Remember me
+                        </label>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (onClose) onClose();
+                            if (onSwitchToForgot) onSwitchToForgot();
+                        }}
+                        className="text-sm text-green-600 hover:text-green-700 font-medium"
+                    >
                         Forgot password?
                     </button>
                 </div>

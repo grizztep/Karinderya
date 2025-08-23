@@ -31,7 +31,7 @@ const Footer = () => (
                             </svg>
                         </a>
                         <a 
-                            href="tel:+1234567890" 
+                            href="#" 
                             className="bg-gray-800 hover:bg-green-600 p-3 rounded-full transition-colors transform hover:scale-110"
                             aria-label="Phone"
                         >
@@ -40,16 +40,6 @@ const Footer = () => (
                             </svg>
                         </a>
                     </div>
-                </div>
-
-                <div>
-                    <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-                    <ul className="space-y-2">
-                        <li><a href="#" className="text-gray-300 hover:text-green-400 transition-colors">About Us</a></li>
-                        <li><a href="#" className="text-gray-300 hover:text-green-400 transition-colors">Menu</a></li>
-                        <li><a href="#" className="text-gray-300 hover:text-green-400 transition-colors">Services</a></li>
-                        <li><a href="#" className="text-gray-300 hover:text-green-400 transition-colors">Contact</a></li>
-                    </ul>
                 </div>
 
                 <div>

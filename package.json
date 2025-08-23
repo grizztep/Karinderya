@@ -17,8 +17,10 @@
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
+        "lucide-react": "^0.541.0",
         "react": "^18.2.0",
-        "react-dom": "^18.2.0"
+        "react-dom": "^18.2.0",
+        "recharts": "^3.1.2"
     },
     "name": "catering-system",
     "version": "1.0.0",

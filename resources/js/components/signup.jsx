@@ -76,14 +76,60 @@ const Signup = ({ onSwitchToLogin, onClose }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
-        
+
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        setErrors({}); // Clear any previous errors
+
+        try {
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            const response = await fetch('/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken })
+                },
+                body: JSON.stringify({
+                    name: formData.name.trim(),
+                    email: formData.email.trim(),
+                    password: formData.password,
+                    confirmPassword: formData.confirmPassword,
+                    address: formData.address.trim(),
+                    contactNumber: formData.contactNumber.replace(/\s/g, '') // Remove spaces
+                })
+            });
+
+            const data = await response.json();
+            console.log('Response:', data);
+
+            if (response.ok) {
+                alert("Account created successfully! Welcome aboard!");
+                // Clear form
+                setFormData({
+                    name: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    address: '',
+                    contactNumber: ''
+                });
+                onClose && onClose();
+            } else {
+                // Handle validation errors
+                if (response.status === 422 && data.errors) {
+                    setErrors(data.errors);
+                } else {
+                    alert(data.message || "Registration failed. Please try again.");
+                }
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            alert("Network error occurred. Please check your connection and try again.");
+        } finally {
             setLoading(false);
-            console.log('Signup submitted:', formData);
-            onClose();
-        }, 2000);
+        }
     };
 
     const getPasswordStrength = () => {
@@ -149,7 +195,16 @@ const Signup = ({ onSwitchToLogin, onClose }) => {
                         }`}
                         placeholder="Enter your full name"
                     />
-                    {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                    {errors.name && (
+                        <div className="mt-1">
+                            {Array.isArray(errors.name) 
+                                ? errors.name.map((error, idx) => (
+                                    <p key={idx} className="text-sm text-red-600">{error}</p>
+                                  ))
+                                : <p className="text-sm text-red-600">{errors.name}</p>
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Email */}
@@ -168,7 +223,16 @@ const Signup = ({ onSwitchToLogin, onClose }) => {
                         }`}
                         placeholder="Enter your email"
                     />
-                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                    {errors.email && (
+                        <div className="mt-1">
+                            {Array.isArray(errors.email) 
+                                ? errors.email.map((error, idx) => (
+                                    <p key={idx} className="text-sm text-red-600">{error}</p>
+                                  ))
+                                : <p className="text-sm text-red-600">{errors.email}</p>
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Password */}
@@ -222,7 +286,16 @@ const Signup = ({ onSwitchToLogin, onClose }) => {
                         </div>
                     )}
                     
-                    {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                    {errors.password && (
+                        <div className="mt-1">
+                            {Array.isArray(errors.password) 
+                                ? errors.password.map((error, idx) => (
+                                    <p key={idx} className="text-sm text-red-600">{error}</p>
+                                  ))
+                                : <p className="text-sm text-red-600">{errors.password}</p>
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Confirm Password */}
@@ -260,7 +333,16 @@ const Signup = ({ onSwitchToLogin, onClose }) => {
                             <span className="text-sm text-green-600">Passwords match</span>
                         </div>
                     )}
-                    {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
+                    {errors.confirmPassword && (
+                        <div className="mt-1">
+                            {Array.isArray(errors.confirmPassword) 
+                                ? errors.confirmPassword.map((error, idx) => (
+                                    <p key={idx} className="text-sm text-red-600">{error}</p>
+                                  ))
+                                : <p className="text-sm text-red-600">{errors.confirmPassword}</p>
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Full Address */}
@@ -279,7 +361,16 @@ const Signup = ({ onSwitchToLogin, onClose }) => {
                         }`}
                         placeholder="Enter your complete address"
                     />
-                    {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+                    {errors.address && (
+                        <div className="mt-1">
+                            {Array.isArray(errors.address) 
+                                ? errors.address.map((error, idx) => (
+                                    <p key={idx} className="text-sm text-red-600">{error}</p>
+                                  ))
+                                : <p className="text-sm text-red-600">{errors.address}</p>
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Contact Number */}
@@ -298,7 +389,16 @@ const Signup = ({ onSwitchToLogin, onClose }) => {
                         }`}
                         placeholder="09XX XXX XXXX"
                     />
-                    {errors.contactNumber && <p className="mt-1 text-sm text-red-600">{errors.contactNumber}</p>}
+                    {errors.contactNumber && (
+                        <div className="mt-1">
+                            {Array.isArray(errors.contactNumber) 
+                                ? errors.contactNumber.map((error, idx) => (
+                                    <p key={idx} className="text-sm text-red-600">{error}</p>
+                                  ))
+                                : <p className="text-sm text-red-600">{errors.contactNumber}</p>
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Terms and Privacy */}
